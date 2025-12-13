@@ -1,9 +1,7 @@
 # 🪟 🛜 🖧 EtherWarp v1.0
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![AUR](https://img.shields.io/aur/version/remindmez)](https://aur.archlinux.org/packages/remindmez)
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Install with pipx](https://img.shields.io/badge/Install%20with-pipx-blue?logo=pip)](https://github.com/Penguin-Dev93/remindmez)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell)](https://learn.microsoft.com/powershell/)
 [![GitHub Stars](https://img.shields.io/github/stars/Penguin-Dev93/remindmez?style=social)](https://github.com/Penguin-Dev93/remindmez/stargazers)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-yellow?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/penguin.dev93)
 [![Follow on X](https://img.shields.io/badge/Follow-%40Penguin__Dev93-1DA1F2?style=flat&logo=twitter&logoColor=white)](https://x.com/Penguin_Dev93)
