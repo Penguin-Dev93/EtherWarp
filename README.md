@@ -8,7 +8,7 @@
 
 
 
-**EtherWarp** is a Windows PowerSell Script that changes you IP Address.
+**EtherWarp** is a Windows PowerSell Script that changes your IP Address.
 
 ---
 
