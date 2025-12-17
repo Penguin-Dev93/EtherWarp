@@ -1,4 +1,4 @@
-# 🪟 🛜 🖧 EtherWarp v1.0
+# 🪟 🛜 🖧 EtherWarp v1.1
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell)](https://learn.microsoft.com/powershell/)
@@ -9,6 +9,7 @@
 
 
 **EtherWarp** is a Windows PowerSell Script that changes your IP Address.
+**Version 1.1 is now Live** DHCP Support
 
 ---
 
