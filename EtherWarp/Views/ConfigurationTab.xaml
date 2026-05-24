@@ -1,0 +1,233 @@
+<UserControl x:Class="EtherWarp.Views.ConfigurationTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:EtherWarp.Converters">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:BoolToVisibilityConverter x:Key="InvBoolToVis" Invert="True"/>
+        <conv:StringToVisibilityConverter x:Key="StrToVis"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVis"/>
+        <conv:NullToBoolConverter x:Key="NullToBool"/>
+    </UserControl.Resources>
+
+    <Grid Margin="12,0,12,12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="12"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT PANEL: preset list -->
+        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Presets"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontSize="16" FontWeight="SemiBold"
+                           Margin="0,0,0,12"/>
+
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding ConfigVM.Presets}"
+                         SelectedItem="{Binding ConfigVM.SelectedPreset, Mode=TwoWay}"
+                         Margin="0,0,0,12">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding AdapterName}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="11"
+                                           Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Action buttons -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <Button Content="New"
+                            Command="{Binding ConfigVM.NewPresetCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Padding="14,8"
+                            Margin="0,0,6,0"/>
+                    <Button Content="Edit"
+                            Command="{Binding ConfigVM.EditPresetCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="14,8"
+                            Margin="0,0,6,0"
+                            IsEnabled="{Binding ConfigVM.SelectedPreset, Converter={StaticResource NullToBool}}"/>
+                    <Button Content="Delete"
+                            Command="{Binding ConfigVM.DeletePresetCommand}"
+                            Style="{StaticResource DangerButtonStyle}"
+                            Padding="14,8"
+                            IsEnabled="{Binding ConfigVM.SelectedPreset, Converter={StaticResource NullToBool}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- RIGHT PANEL -->
+        <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+            <Grid>
+                <!-- PANEL A: placeholder when not editing -->
+                <StackPanel Visibility="{Binding ConfigVM.IsEditing, Converter={StaticResource InvBoolToVis}}"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="⚙"
+                               FontSize="40"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,0,0,12"/>
+                    <TextBlock Text="Select a preset or create a new one"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontSize="15" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Configure network profiles for your adapters"
+                               Foreground="{DynamicResource TextSecondary}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- PANEL B: edit form -->
+                <Grid Visibility="{Binding ConfigVM.IsEditing, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Form header -->
+                    <TextBlock Grid.Row="0"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontSize="16" FontWeight="SemiBold"
+                               Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Edit Preset"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ConfigVM.IsNewPreset}" Value="True">
+                                        <Setter Property="Text" Value="New Preset"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Scrollable form fields -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+
+                            <!-- Preset Name -->
+                            <TextBlock Text="Preset Name" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding ConfigVM.FormName, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorName}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorName, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- Adapter -->
+                            <TextBlock Text="Adapter" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding ConfigVM.AvailableAdapters}"
+                                      SelectedItem="{Binding ConfigVM.FormAdapterName, Mode=TwoWay}"
+                                      Style="{StaticResource ComboBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorAdapterName}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorAdapterName, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- IP Address -->
+                            <TextBlock Text="IP Address" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding ConfigVM.FormIP, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorIP}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorIP, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- Subnet Mask -->
+                            <TextBlock Text="Subnet Mask" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding ConfigVM.FormSubnet, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorSubnet}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorSubnet, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- Gateway (optional) -->
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,4">
+                                <TextBlock Text="Gateway" Style="{StaticResource FieldLabel}" Margin="0"/>
+                                <TextBlock Text=" (optional)"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="11"
+                                           VerticalAlignment="Bottom"
+                                           Margin="4,0,0,4"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding ConfigVM.FormGateway, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorGateway}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorGateway, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- Primary DNS (optional) -->
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,4">
+                                <TextBlock Text="Primary DNS" Style="{StaticResource FieldLabel}" Margin="0"/>
+                                <TextBlock Text=" (optional)"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="11"
+                                           VerticalAlignment="Bottom"
+                                           Margin="4,0,0,4"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding ConfigVM.FormPrimaryDNS, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorPrimaryDNS}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorPrimaryDNS, Converter={StaticResource StrToVis}}"/>
+
+                            <!-- Secondary DNS (optional) -->
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,4">
+                                <TextBlock Text="Secondary DNS" Style="{StaticResource FieldLabel}" Margin="0"/>
+                                <TextBlock Text=" (optional)"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="11"
+                                           VerticalAlignment="Bottom"
+                                           Margin="4,0,0,4"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding ConfigVM.FormSecondaryDNS, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource TextBoxStyle}"/>
+                            <TextBlock Text="{Binding ConfigVM.ErrorSecondaryDNS}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       Visibility="{Binding ConfigVM.ErrorSecondaryDNS, Converter={StaticResource StrToVis}}"/>
+                            <TextBlock Text="Secondary DNS requires a Primary DNS"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       FontSize="10"
+                                       Margin="0,3,0,12"/>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Save / Cancel buttons -->
+                    <StackPanel Grid.Row="2"
+                                Orientation="Horizontal"
+                                Margin="0,12,0,0">
+                        <Button Content="Save"
+                                Command="{Binding ConfigVM.SavePresetCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,0,10,0"/>
+                        <Button Content="Cancel"
+                                Command="{Binding ConfigVM.CancelEditCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
+                    </StackPanel>
+
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
