@@ -54,9 +54,11 @@ public partial class ConfigViewModel : ObservableObject
     private void NewPreset()
     {
         IsNewPreset = true;
-        IsEditing = true;
+        // Populate (clear) fields and refresh adapters while the form is still
+        // Collapsed, so all bindings are current before IsEditing=true renders it.
         ClearForm();
         RefreshAdapters();
+        IsEditing = true;
     }
 
     [RelayCommand]
@@ -65,17 +67,22 @@ public partial class ConfigViewModel : ObservableObject
         if (SelectedPreset is null) return;
 
         IsNewPreset = false;
-        IsEditing = true;
         ClearErrors();
+        // Refresh adapters and populate every form field while the form is still
+        // Collapsed.  This guarantees that FormAdapterName transitions from the
+        // cleared-empty state to the preset's adapter name, which always fires
+        // PropertyChanged.  The ComboBox therefore has an up-to-date SelectedItem
+        // before IsEditing=true makes the form Visible — preventing the TwoWay
+        // binding from pushing null back after the first render.
         RefreshAdapters();
-
-        FormName = SelectedPreset.Name;
-        FormAdapterName = SelectedPreset.AdapterName;
-        FormIP = SelectedPreset.IPAddress;
-        FormSubnet = SelectedPreset.SubnetMask;
-        FormGateway = SelectedPreset.Gateway ?? string.Empty;
-        FormPrimaryDNS = SelectedPreset.PrimaryDNS ?? string.Empty;
+        FormName         = SelectedPreset.Name;
+        FormAdapterName  = SelectedPreset.AdapterName;
+        FormIP           = SelectedPreset.IPAddress;
+        FormSubnet       = SelectedPreset.SubnetMask;
+        FormGateway      = SelectedPreset.Gateway      ?? string.Empty;
+        FormPrimaryDNS   = SelectedPreset.PrimaryDNS   ?? string.Empty;
         FormSecondaryDNS = SelectedPreset.SecondaryDNS ?? string.Empty;
+        IsEditing = true;
     }
 
     [RelayCommand]
@@ -146,7 +153,13 @@ public partial class ConfigViewModel : ObservableObject
         }
 
         PersistPresets();
+        // Collapse the form first so the user never sees the fields clear, then
+        // reset form state.  On the next EditPreset call this guarantees that every
+        // field — including FormAdapterName — starts from empty, so the assignment
+        // from the preset always produces a value-change that fires PropertyChanged,
+        // giving the ComboBox a binding notification before the form becomes Visible.
         IsEditing = false;
+        ClearForm();
     }
 
     [RelayCommand]
