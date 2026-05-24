@@ -24,7 +24,12 @@ public partial class ConfigViewModel : ObservableObject
     [ObservableProperty] private string _formPrimaryDNS = string.Empty;
     [ObservableProperty] private string _formSecondaryDNS = string.Empty;
     [ObservableProperty] private string _formAdapterName = string.Empty;
-    [ObservableProperty] private ObservableCollection<string> _availableAdapters = [];
+
+    // Stable collection reference — never replaced, only mutated in-place.
+    // Using [ObservableProperty] would generate a setter that replaces the reference,
+    // causing WPF to tear down the ItemsSource binding and clear SelectedItem.
+    private readonly ObservableCollection<string> _availableAdapters = new();
+    public ObservableCollection<string> AvailableAdapters => _availableAdapters;
 
     // Validation errors
     [ObservableProperty] private string _errorName = string.Empty;
@@ -91,12 +96,12 @@ public partial class ConfigViewModel : ObservableObject
 
         if (!isValid)
         {
-            ErrorName        = errors.GetValueOrDefault("Name", string.Empty);
-            ErrorAdapterName = errors.GetValueOrDefault("AdapterName", string.Empty);
-            ErrorIP          = errors.GetValueOrDefault("IPAddress", string.Empty);
-            ErrorSubnet      = errors.GetValueOrDefault("SubnetMask", string.Empty);
-            ErrorGateway     = errors.GetValueOrDefault("Gateway", string.Empty);
-            ErrorPrimaryDNS  = errors.GetValueOrDefault("PrimaryDNS", string.Empty);
+            ErrorName         = errors.GetValueOrDefault("Name", string.Empty);
+            ErrorAdapterName  = errors.GetValueOrDefault("AdapterName", string.Empty);
+            ErrorIP           = errors.GetValueOrDefault("IPAddress", string.Empty);
+            ErrorSubnet       = errors.GetValueOrDefault("SubnetMask", string.Empty);
+            ErrorGateway      = errors.GetValueOrDefault("Gateway", string.Empty);
+            ErrorPrimaryDNS   = errors.GetValueOrDefault("PrimaryDNS", string.Empty);
             ErrorSecondaryDNS = errors.GetValueOrDefault("SecondaryDNS", string.Empty);
             return;
         }
@@ -107,12 +112,12 @@ public partial class ConfigViewModel : ObservableObject
         {
             var preset = new NetworkPreset
             {
-                Name = FormName,
-                AdapterName = FormAdapterName,
-                IPAddress = FormIP,
-                SubnetMask = FormSubnet,
-                Gateway = NullIfEmpty(FormGateway),
-                PrimaryDNS = NullIfEmpty(FormPrimaryDNS),
+                Name         = FormName,
+                AdapterName  = FormAdapterName,
+                IPAddress    = FormIP,
+                SubnetMask   = FormSubnet,
+                Gateway      = NullIfEmpty(FormGateway),
+                PrimaryDNS   = NullIfEmpty(FormPrimaryDNS),
                 SecondaryDNS = NullIfEmpty(FormSecondaryDNS)
             };
             Presets.Add(preset);
@@ -122,12 +127,12 @@ public partial class ConfigViewModel : ObservableObject
         {
             // Capture reference before collection mutation clears SelectedPreset via TwoWay binding
             var preset = SelectedPreset;
-            preset.Name = FormName;
-            preset.AdapterName = FormAdapterName;
-            preset.IPAddress = FormIP;
-            preset.SubnetMask = FormSubnet;
-            preset.Gateway = NullIfEmpty(FormGateway);
-            preset.PrimaryDNS = NullIfEmpty(FormPrimaryDNS);
+            preset.Name         = FormName;
+            preset.AdapterName  = FormAdapterName;
+            preset.IPAddress    = FormIP;
+            preset.SubnetMask   = FormSubnet;
+            preset.Gateway      = NullIfEmpty(FormGateway);
+            preset.PrimaryDNS   = NullIfEmpty(FormPrimaryDNS);
             preset.SecondaryDNS = NullIfEmpty(FormSecondaryDNS);
 
             // Force ListBox refresh: NetworkPreset is a plain model with no INPC
@@ -155,17 +160,24 @@ public partial class ConfigViewModel : ObservableObject
 
     private void RefreshAdapters()
     {
-        // Capture before replacing the collection: WPF's ItemsSource replacement clears
-        // ComboBox.SelectedItem and pushes null back through the TwoWay binding, erasing
-        // FormAdapterName before the new collection is in place.
-        var previous = FormAdapterName;
+        // Capture the current selection before mutating the collection.
+        // In-place mutation avoids the WPF ItemsSource-replacement race where replacing
+        // the collection reference causes the ComboBox to clear SelectedItem and push
+        // null through the TwoWay binding before the new items are indexed.
+        var current = FormAdapterName;
+        var fresh = _networkService.GetPhysicalAdapterNames();
 
-        var adapters = _networkService.GetPhysicalAdapterNames();
-        AvailableAdapters = new ObservableCollection<string>(adapters);
+        var toRemove = _availableAdapters.Except(fresh).ToList();
+        var toAdd    = fresh.Except(_availableAdapters).ToList();
 
-        // Restore the selection if the adapter is still present in the refreshed list.
-        if (!string.IsNullOrEmpty(previous) && AvailableAdapters.Contains(previous))
-            FormAdapterName = previous;
+        foreach (var item in toRemove) _availableAdapters.Remove(item);
+        foreach (var item in toAdd)    _availableAdapters.Add(item);
+
+        // If the previously selected adapter is still in the list, keep it selected.
+        // The in-place mutation above may still briefly clear SelectedItem for items
+        // that were removed and re-added, so we restore explicitly.
+        if (!string.IsNullOrEmpty(current) && _availableAdapters.Contains(current))
+            FormAdapterName = current;
     }
 
     private void ClearForm()

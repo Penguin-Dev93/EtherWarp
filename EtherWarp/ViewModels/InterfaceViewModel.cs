@@ -12,11 +12,18 @@ public partial class InterfaceViewModel : ObservableObject
     private readonly NetworkService _networkService;
     private readonly ConfigViewModel _configVM;
 
-    // Survives the temporary null that occurs when AvailablePresets is replaced mid-Remove/Insert cycle.
-    // Set whenever SelectedPreset changes to a non-null value; never cleared by SyncPresets itself.
+    // Survives the temporary null that occurs when a preset is removed from
+    // AvailablePresets mid-Remove/Insert cycle (SavePreset does RemoveAt + Insert
+    // to force the ListBox to repaint a plain-model item).
+    // Updated on every non-null OnSelectedPresetChanged; never cleared by SyncPresets.
     private Guid? _lastKnownSelectedId;
 
-    [ObservableProperty] private ObservableCollection<NetworkPreset> _availablePresets = [];
+    // Stable collection reference — never replaced, only mutated in-place.
+    // Replacing the reference would cause WPF to tear down the ItemsSource binding
+    // and clear ComboBox.SelectedItem before the new items are indexed.
+    private readonly ObservableCollection<NetworkPreset> _availablePresets = new();
+    public ObservableCollection<NetworkPreset> AvailablePresets => _availablePresets;
+
     [ObservableProperty] private NetworkPreset? _selectedPreset;
     [ObservableProperty] private bool _isBusy = false;
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -41,22 +48,52 @@ public partial class InterfaceViewModel : ObservableObject
 
     private void SyncPresets()
     {
-        // Use SelectedPreset.Id if still set, otherwise fall back to _lastKnownSelectedId.
-        // This handles the Remove/Insert cycle in SavePreset: the Remove call nulls out
-        // SelectedPreset via the TwoWay binding before the Insert call runs, so we need
-        // the field to bridge the gap between the two CollectionChanged events.
+        // Prefer the live SelectedPreset; fall back to the last known Id to bridge
+        // the gap between the Remove and Insert CollectionChanged events in SavePreset.
         var idToRestore = SelectedPreset?.Id ?? _lastKnownSelectedId;
 
-        AvailablePresets = new ObservableCollection<NetworkPreset>(_configVM.Presets);
-        // ^^^ Replacing ItemsSource causes WPF to clear ComboBox.SelectedItem synchronously,
-        // pushing null through the TwoWay binding → SelectedPreset = null here.
+        var fresh = _configVM.Presets;
 
+        // Items in _availablePresets whose Id is no longer in the source collection
+        var toRemove = _availablePresets
+            .Where(p => fresh.All(f => f.Id != p.Id))
+            .ToList();
+
+        // Items in the source collection not yet in _availablePresets
+        var toAdd = fresh
+            .Where(f => _availablePresets.All(p => p.Id != f.Id))
+            .ToList();
+
+        // Items with matching Id but a different object reference (e.g. a deep-copy path)
+        var toReplace = fresh
+            .Where(f => _availablePresets.Any(p => p.Id == f.Id && !ReferenceEquals(p, f)))
+            .ToList();
+
+        // Mutate in-place — WPF reacts to individual Add/Remove/Replace events on
+        // the same collection, so SelectedItem is only cleared when the selected item
+        // itself is removed, not on every unrelated change.
+        foreach (var item in toRemove)
+            _availablePresets.Remove(item);
+
+        foreach (var item in toAdd)
+            _availablePresets.Add(item);
+
+        foreach (var updated in toReplace)
+        {
+            var old = _availablePresets.First(p => p.Id == updated.Id);
+            _availablePresets[_availablePresets.IndexOf(old)] = updated;
+        }
+
+        // Restore selection.  During the Remove step the preset is absent so found
+        // will be null and we leave SelectedPreset null.  During the Insert step
+        // idToRestore comes from _lastKnownSelectedId, finds the re-added preset,
+        // and restores the selection.
         if (idToRestore.HasValue)
         {
-            var found = AvailablePresets.FirstOrDefault(p => p.Id == idToRestore.Value);
+            var found = _availablePresets.FirstOrDefault(p => p.Id == idToRestore.Value);
             if (found is not null)
                 SelectedPreset = found;
-            // If not found the preset was genuinely deleted; leave SelectedPreset null.
+            // If not found: preset was genuinely deleted — leave SelectedPreset null.
         }
     }
 
@@ -100,9 +137,8 @@ public partial class InterfaceViewModel : ObservableObject
 
     partial void OnSelectedPresetChanged(NetworkPreset? value)
     {
-        // Keep _lastKnownSelectedId current so SyncPresets can restore across the
-        // Remove/Insert race. Only update on non-null: null means "temporarily orphaned",
-        // not "user cleared the selection".
+        // Only update on non-null: a null here means "temporarily orphaned during
+        // a Remove/Insert cycle", not "user explicitly cleared the selection".
         if (value is not null)
             _lastKnownSelectedId = value.Id;
 
