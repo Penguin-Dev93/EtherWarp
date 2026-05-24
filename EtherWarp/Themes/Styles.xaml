@@ -426,20 +426,19 @@
                                  Fill="White"
                                  HorizontalAlignment="Left"
                                  VerticalAlignment="Center"
-                                 Margin="3,0,0,0">
-                            <Ellipse.RenderTransform>
-                                <TranslateTransform x:Name="ThumbTranslate" X="0"/>
-                            </Ellipse.RenderTransform>
-                        </Ellipse>
+                                 Margin="3,0,0,0"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="TrackBorder"
                                     Property="Background"
                                     Value="{DynamicResource AccentPrimary}"/>
-                            <Setter TargetName="ThumbTranslate"
-                                    Property="X"
-                                    Value="20"/>
+                            <Setter TargetName="Thumb"
+                                    Property="HorizontalAlignment"
+                                    Value="Right"/>
+                            <Setter TargetName="Thumb"
+                                    Property="Margin"
+                                    Value="0,0,3,0"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="TrackBorder"
