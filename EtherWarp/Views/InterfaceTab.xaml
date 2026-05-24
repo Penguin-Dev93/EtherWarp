@@ -31,6 +31,15 @@
                            FontSize="13"
                            Margin="0,0,0,16"/>
 
+                <!-- Adapter selector -->
+                <TextBlock Text="Target Adapter" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="AdapterComboBox"
+                          ItemsSource="{Binding InterfaceVM.AvailableAdapters}"
+                          SelectedItem="{Binding InterfaceVM.SelectedAdapterName, Mode=OneWay}"
+                          SelectionChanged="AdapterComboBox_SelectionChanged"
+                          Style="{StaticResource ComboBoxStyle}"
+                          Margin="0,0,0,16"/>
+
                 <!-- Separator -->
                 <Border Height="1"
                         Background="{DynamicResource BorderBrush}"
@@ -43,11 +52,7 @@
                           Style="{StaticResource ComboBoxStyle}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock>
-                                <Run Text="{Binding Name}"/>
-                                <Run Text=" → "/>
-                                <Run Text="{Binding AdapterName}"/>
-                            </TextBlock>
+                            <TextBlock Text="{Binding Name}"/>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -75,7 +80,7 @@
                                    Foreground="{DynamicResource TextSecondary}"
                                    FontSize="12" Margin="0,0,12,4"/>
                         <TextBlock Grid.Row="0" Grid.Column="1"
-                                   Text="{Binding InterfaceVM.SelectedPreset.AdapterName}"
+                                   Text="{Binding InterfaceVM.SelectedAdapterName}"
                                    Foreground="{DynamicResource TextPrimary}"
                                    FontSize="12" Margin="0,0,0,4"/>
 

@@ -20,7 +20,7 @@ public partial class MainViewModel : ObservableObject
         var storage = new PresetStorageService();
         var network = new NetworkService();
 
-        ConfigVM = new ConfigViewModel(storage, network);
+        ConfigVM = new ConfigViewModel(storage);
         InterfaceVM = new InterfaceViewModel(storage, network, ConfigVM);
     }
 

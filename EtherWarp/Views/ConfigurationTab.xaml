@@ -39,15 +39,9 @@
                          Margin="0,0,0,12">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}"
-                                           Foreground="{DynamicResource TextPrimary}"
-                                           FontSize="13" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding AdapterName}"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="11"
-                                           Margin="0,2,0,0"/>
-                            </StackPanel>
+                            <TextBlock Text="{Binding Name}"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontSize="13" FontWeight="SemiBold"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -135,17 +129,6 @@
                             <TextBlock Text="{Binding ConfigVM.ErrorName}"
                                        Style="{StaticResource ErrorLabel}"
                                        Visibility="{Binding ConfigVM.ErrorName, Converter={StaticResource StrToVis}}"/>
-
-                            <!-- Adapter -->
-                            <TextBlock Text="Adapter" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="AdapterComboBox"
-                                      ItemsSource="{Binding ConfigVM.AvailableAdapters}"
-                                      SelectedItem="{Binding ConfigVM.FormAdapterName, Mode=OneWay}"
-                                      SelectionChanged="AdapterComboBox_SelectionChanged"
-                                      Style="{StaticResource ComboBoxStyle}"/>
-                            <TextBlock Text="{Binding ConfigVM.ErrorAdapterName}"
-                                       Style="{StaticResource ErrorLabel}"
-                                       Visibility="{Binding ConfigVM.ErrorAdapterName, Converter={StaticResource StrToVis}}"/>
 
                             <!-- IP Address -->
                             <TextBlock Text="IP Address" Style="{StaticResource FieldLabel}"/>

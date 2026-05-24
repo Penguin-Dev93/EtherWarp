@@ -24,7 +24,12 @@ public partial class InterfaceViewModel : ObservableObject
     private readonly ObservableCollection<NetworkPreset> _availablePresets = new();
     public ObservableCollection<NetworkPreset> AvailablePresets => _availablePresets;
 
+    // Adapter collection — same stable in-place pattern.
+    private readonly ObservableCollection<string> _availableAdapters = new();
+    public ObservableCollection<string> AvailableAdapters => _availableAdapters;
+
     [ObservableProperty] private NetworkPreset? _selectedPreset;
+    [ObservableProperty] private string _selectedAdapterName = string.Empty;
     [ObservableProperty] private bool _isBusy = false;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _statusIsSuccess = false;
@@ -39,6 +44,7 @@ public partial class InterfaceViewModel : ObservableObject
 
         _configVM.Presets.CollectionChanged += OnPresetsChanged;
         SyncPresets();
+        RefreshAdapters();
     }
 
     private void OnPresetsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -97,6 +103,21 @@ public partial class InterfaceViewModel : ObservableObject
         }
     }
 
+    private void RefreshAdapters()
+    {
+        var current = SelectedAdapterName;
+        var fresh = _networkService.GetPhysicalAdapterNames();
+
+        var toRemove = _availableAdapters.Except(fresh).ToList();
+        var toAdd    = fresh.Except(_availableAdapters).ToList();
+
+        foreach (var item in toRemove) _availableAdapters.Remove(item);
+        foreach (var item in toAdd)    _availableAdapters.Add(item);
+
+        if (!string.IsNullOrEmpty(current) && _availableAdapters.Contains(current))
+            SelectedAdapterName = current;
+    }
+
     [RelayCommand(CanExecute = nameof(CanExecute))]
     private async Task ExecutePresetAsync()
     {
@@ -105,7 +126,7 @@ public partial class InterfaceViewModel : ObservableObject
         IsBusy = true;
         StatusMessage = string.Empty;
 
-        var result = await _networkService.ApplyPresetAsync(SelectedPreset);
+        var result = await _networkService.ApplyPresetAsync(SelectedPreset, SelectedAdapterName);
         StatusMessage = result.Message;
         StatusIsSuccess = result.Success;
 
@@ -120,14 +141,17 @@ public partial class InterfaceViewModel : ObservableObject
         IsBusy = true;
         StatusMessage = string.Empty;
 
-        var result = await _networkService.ResetToDHCPAsync(SelectedPreset.AdapterName);
+        var result = await _networkService.ResetToDHCPAsync(SelectedAdapterName);
         StatusMessage = result.Message;
         StatusIsSuccess = result.Success;
 
         IsBusy = false;
     }
 
-    private bool CanExecute() => SelectedPreset != null && !IsBusy;
+    private bool CanExecute() =>
+        SelectedPreset != null &&
+        !string.IsNullOrEmpty(SelectedAdapterName) &&
+        !IsBusy;
 
     partial void OnIsBusyChanged(bool value)
     {
@@ -142,6 +166,12 @@ public partial class InterfaceViewModel : ObservableObject
         if (value is not null)
             _lastKnownSelectedId = value.Id;
 
+        ExecutePresetCommand.NotifyCanExecuteChanged();
+        ResetToDHCPCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedAdapterNameChanged(string value)
+    {
         ExecutePresetCommand.NotifyCanExecuteChanged();
         ResetToDHCPCommand.NotifyCanExecuteChanged();
     }

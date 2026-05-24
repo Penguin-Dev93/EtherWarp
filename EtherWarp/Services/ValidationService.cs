@@ -32,16 +32,13 @@ public static class ValidationService
     }
 
     public static (bool IsValid, Dictionary<string, string> Errors) ValidatePreset(
-        string name, string adapterName, string ip, string subnet,
+        string name, string ip, string subnet,
         string? gateway, string? primaryDns, string? secondaryDns)
     {
         var errors = new Dictionary<string, string>();
 
         if (string.IsNullOrWhiteSpace(name))
             errors["Name"] = "Preset name is required.";
-
-        if (string.IsNullOrWhiteSpace(adapterName))
-            errors["AdapterName"] = "Adapter selection is required.";
 
         if (!IsValidIPAddress(ip))
             errors["IPAddress"] = "Enter a valid IPv4 address (e.g. 192.168.1.10).";

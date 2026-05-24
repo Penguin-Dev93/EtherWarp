@@ -34,18 +34,18 @@ public class NetworkService
         }
     }
 
-    public async Task<(bool Success, string Message)> ApplyPresetAsync(NetworkPreset preset)
+    public async Task<(bool Success, string Message)> ApplyPresetAsync(NetworkPreset preset, string adapterName)
     {
         // Step 1: Set static IP
         string ipArgs;
         if (!string.IsNullOrWhiteSpace(preset.Gateway))
         {
-            ipArgs = $"interface ip set address name=\"{preset.AdapterName}\" " +
+            ipArgs = $"interface ip set address name=\"{adapterName}\" " +
                      $"static {preset.IPAddress} {preset.SubnetMask} {preset.Gateway} 1";
         }
         else
         {
-            ipArgs = $"interface ip set address name=\"{preset.AdapterName}\" " +
+            ipArgs = $"interface ip set address name=\"{adapterName}\" " +
                      $"static {preset.IPAddress} {preset.SubnetMask}";
         }
 
@@ -57,20 +57,20 @@ public class NetworkService
         if (!string.IsNullOrWhiteSpace(preset.PrimaryDNS))
         {
             var dnsResult = await RunNetshAsync(
-                $"interface ip set dns name=\"{preset.AdapterName}\" static {preset.PrimaryDNS} primary");
+                $"interface ip set dns name=\"{adapterName}\" static {preset.PrimaryDNS} primary");
             if (!dnsResult.Success)
                 return dnsResult;
 
             if (!string.IsNullOrWhiteSpace(preset.SecondaryDNS))
             {
                 var dns2Result = await RunNetshAsync(
-                    $"interface ip add dns name=\"{preset.AdapterName}\" {preset.SecondaryDNS} index=2");
+                    $"interface ip add dns name=\"{adapterName}\" {preset.SecondaryDNS} index=2");
                 if (!dns2Result.Success)
                     return dns2Result;
             }
         }
 
-        return await VerifyAppliedAsync(preset);
+        return await VerifyAppliedAsync(preset, adapterName);
     }
 
     public async Task<(bool Success, string Message)> ResetToDHCPAsync(string adapterName)
@@ -124,22 +124,22 @@ public class NetworkService
         return (process.ExitCode == 0, combined);
     }
 
-    private static async Task<(bool Success, string Message)> VerifyAppliedAsync(NetworkPreset preset)
+    private static async Task<(bool Success, string Message)> VerifyAppliedAsync(NetworkPreset preset, string adapterName)
     {
         await Task.Delay(1500);
 
         var iface = NetworkInterface.GetAllNetworkInterfaces()
-            .FirstOrDefault(ni => ni.Name.Equals(preset.AdapterName, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(ni => ni.Name.Equals(adapterName, StringComparison.OrdinalIgnoreCase));
 
         if (iface is null)
-            return (false, $"Adapter '{preset.AdapterName}' not found during verification.");
+            return (false, $"Adapter '{adapterName}' not found during verification.");
 
         var found = iface.GetIPProperties().UnicastAddresses
             .Any(a => a.Address.ToString().Equals(preset.IPAddress, StringComparison.OrdinalIgnoreCase));
 
         if (found)
             return (true,
-                $"Configuration applied successfully.\nAdapter: {preset.AdapterName}\nIP: {preset.IPAddress}/{preset.SubnetMask}");
+                $"Configuration applied successfully.\nAdapter: {adapterName}\nIP: {preset.IPAddress}/{preset.SubnetMask}");
 
         return (false,
             "Command ran but IP address was not detected on the adapter. " +
