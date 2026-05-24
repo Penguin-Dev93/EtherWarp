@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.rsuser
+
+# Build outputs
+bin/
+obj/
+publish/
+
+# macOS
+.DS_Store
+
+# NuGet
+*.nupkg
+*.snupkg
