@@ -12,6 +12,10 @@ public partial class InterfaceViewModel : ObservableObject
     private readonly NetworkService _networkService;
     private readonly ConfigViewModel _configVM;
 
+    // Survives the temporary null that occurs when AvailablePresets is replaced mid-Remove/Insert cycle.
+    // Set whenever SelectedPreset changes to a non-null value; never cleared by SyncPresets itself.
+    private Guid? _lastKnownSelectedId;
+
     [ObservableProperty] private ObservableCollection<NetworkPreset> _availablePresets = [];
     [ObservableProperty] private NetworkPreset? _selectedPreset;
     [ObservableProperty] private bool _isBusy = false;
@@ -37,10 +41,23 @@ public partial class InterfaceViewModel : ObservableObject
 
     private void SyncPresets()
     {
-        var current = SelectedPreset?.Id;
+        // Use SelectedPreset.Id if still set, otherwise fall back to _lastKnownSelectedId.
+        // This handles the Remove/Insert cycle in SavePreset: the Remove call nulls out
+        // SelectedPreset via the TwoWay binding before the Insert call runs, so we need
+        // the field to bridge the gap between the two CollectionChanged events.
+        var idToRestore = SelectedPreset?.Id ?? _lastKnownSelectedId;
+
         AvailablePresets = new ObservableCollection<NetworkPreset>(_configVM.Presets);
-        if (current.HasValue)
-            SelectedPreset = AvailablePresets.FirstOrDefault(p => p.Id == current);
+        // ^^^ Replacing ItemsSource causes WPF to clear ComboBox.SelectedItem synchronously,
+        // pushing null through the TwoWay binding → SelectedPreset = null here.
+
+        if (idToRestore.HasValue)
+        {
+            var found = AvailablePresets.FirstOrDefault(p => p.Id == idToRestore.Value);
+            if (found is not null)
+                SelectedPreset = found;
+            // If not found the preset was genuinely deleted; leave SelectedPreset null.
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanExecute))]
@@ -83,6 +100,12 @@ public partial class InterfaceViewModel : ObservableObject
 
     partial void OnSelectedPresetChanged(NetworkPreset? value)
     {
+        // Keep _lastKnownSelectedId current so SyncPresets can restore across the
+        // Remove/Insert race. Only update on non-null: null means "temporarily orphaned",
+        // not "user cleared the selection".
+        if (value is not null)
+            _lastKnownSelectedId = value.Id;
+
         ExecutePresetCommand.NotifyCanExecuteChanged();
         ResetToDHCPCommand.NotifyCanExecuteChanged();
     }

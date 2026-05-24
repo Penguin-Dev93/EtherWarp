@@ -155,8 +155,17 @@ public partial class ConfigViewModel : ObservableObject
 
     private void RefreshAdapters()
     {
+        // Capture before replacing the collection: WPF's ItemsSource replacement clears
+        // ComboBox.SelectedItem and pushes null back through the TwoWay binding, erasing
+        // FormAdapterName before the new collection is in place.
+        var previous = FormAdapterName;
+
         var adapters = _networkService.GetPhysicalAdapterNames();
         AvailableAdapters = new ObservableCollection<string>(adapters);
+
+        // Restore the selection if the adapter is still present in the refreshed list.
+        if (!string.IsNullOrEmpty(previous) && AvailableAdapters.Contains(previous))
+            FormAdapterName = previous;
     }
 
     private void ClearForm()
