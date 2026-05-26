@@ -11,7 +11,7 @@
         AllowsTransparency="False"
         ResizeMode="CanResizeWithGrip">
 
-    <Grid>
+    <Grid Background="{DynamicResource AppBackground}">
         <Grid.RowDefinitions>
             <RowDefinition Height="44"/>
             <RowDefinition Height="*"/>
