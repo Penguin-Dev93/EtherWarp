@@ -35,7 +35,7 @@ internal static class ThemeService
 {
     public static void ApplyTheme(bool isDark)
     {
-        var dicts = Application.Current.Resources.MergedDictionaries;
+        var dicts = System.Windows.Application.Current.Resources.MergedDictionaries;
 
         var existing = dicts.FirstOrDefault(d =>
             d.Source != null && d.Source.OriginalString.Contains("Theme"));

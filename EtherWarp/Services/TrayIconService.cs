@@ -67,7 +67,7 @@ public sealed class TrayIconService : IDisposable
 
         menu.Items.Add(CreateMenuItem("Refresh Adapters", (_, _) => BuildMenu()));
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add(CreateMenuItem("Exit", (_, _) => Application.Current.Shutdown()));
+        menu.Items.Add(CreateMenuItem("Exit", (_, _) => System.Windows.Application.Current.Shutdown()));
 
         _menu = menu;
         _notifyIcon.ContextMenuStrip = menu;
