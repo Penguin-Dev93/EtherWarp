@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows;
 using EtherWarp.Models;
 using EtherWarp.ViewModels;
+using EtherWarp.Views;
 using WinForms = System.Windows.Forms;
 
 namespace EtherWarp.Services;
@@ -14,6 +15,7 @@ public sealed class TrayIconService : IDisposable
     private readonly WinForms.NotifyIcon _notifyIcon;
 
     private WinForms.ContextMenuStrip? _menu;
+    private TrayQuickWindow? _quickWindow;
     private bool _isDisposed;
     private bool _isBusy;
 
@@ -29,7 +31,8 @@ public sealed class TrayIconService : IDisposable
             Text = "EtherWarp",
             Visible = true
         };
-        _notifyIcon.DoubleClick += (_, _) => ShowMainWindow();
+        _notifyIcon.MouseUp += NotifyIcon_MouseUp;
+        _notifyIcon.DoubleClick += (_, _) => ShowQuickWindow();
 
         BuildMenu();
     }
@@ -42,7 +45,14 @@ public sealed class TrayIconService : IDisposable
         _isDisposed = true;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
+        _quickWindow?.Close();
         _menu?.Dispose();
+    }
+
+    private void NotifyIcon_MouseUp(object? sender, WinForms.MouseEventArgs e)
+    {
+        if (e.Button == WinForms.MouseButtons.Left)
+            ShowQuickWindow();
     }
 
     private void BuildMenu()
@@ -191,6 +201,14 @@ public sealed class TrayIconService : IDisposable
 
         _mainWindow.Show();
         _mainWindow.Activate();
+    }
+
+    private void ShowQuickWindow()
+    {
+        if (_quickWindow is null)
+            _quickWindow = new TrayQuickWindow(_mainWindow, _mainViewModel, _networkService);
+
+        _quickWindow.ShowNearCursor();
     }
 
     private void ShowBalloon(string title, string message, WinForms.ToolTipIcon icon)
