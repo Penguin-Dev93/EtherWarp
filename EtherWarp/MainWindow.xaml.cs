@@ -1,17 +1,23 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using EtherWarp.Services;
 using EtherWarp.ViewModels;
 
 namespace EtherWarp;
 
 public partial class MainWindow : Window
 {
+    private TrayIconService? _trayIconService;
+
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        var mainViewModel = new MainViewModel();
+        DataContext = mainViewModel;
+        _trayIconService = new TrayIconService(this, mainViewModel, mainViewModel.NetworkService);
         SourceInitialized += (_, _) => ApplyDarkWindowFrame();
+        Closed += (_, _) => _trayIconService?.Dispose();
     }
 
     private void ApplyDarkWindowFrame()
