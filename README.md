@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C#](https://img.shields.io/badge/C%23-.NET_8-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![GitHub Stars](https://img.shields.io/github/stars/Penguin-Dev93/EtherWarp2?style=social)](https://github.com/Penguin-Dev93/EtherWarp/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/Penguin-Dev93/EtherWarp?style=social)](https://github.com/Penguin-Dev93/EtherWarp/stargazers)
 [![Windows](https://img.shields.io/badge/Windows-.exe-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-D97757?logo=anthropic&logoColor=white)](https://anthropic.com)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-yellow?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/penguin.dev93)
