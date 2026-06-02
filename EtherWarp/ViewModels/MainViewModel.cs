@@ -14,14 +14,15 @@ public partial class MainViewModel : ObservableObject
 
     public ConfigViewModel ConfigVM { get; }
     public InterfaceViewModel InterfaceVM { get; }
+    public NetworkService NetworkService { get; }
 
     public MainViewModel()
     {
         var storage = new PresetStorageService();
-        var network = new NetworkService();
+        NetworkService = new NetworkService();
 
         ConfigVM = new ConfigViewModel(storage);
-        InterfaceVM = new InterfaceViewModel(storage, network, ConfigVM);
+        InterfaceVM = new InterfaceViewModel(storage, NetworkService, ConfigVM);
     }
 
     partial void OnIsDarkThemeChanged(bool value)
@@ -34,7 +35,7 @@ internal static class ThemeService
 {
     public static void ApplyTheme(bool isDark)
     {
-        var dicts = Application.Current.Resources.MergedDictionaries;
+        var dicts = System.Windows.Application.Current.Resources.MergedDictionaries;
 
         var existing = dicts.FirstOrDefault(d =>
             d.Source != null && d.Source.OriginalString.Contains("Theme"));
